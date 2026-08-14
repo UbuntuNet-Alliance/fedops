@@ -18,7 +18,7 @@
 
 ## Notes
 
-These instructions use `Vim` as text editor:
+These instructions use `Vim` as text editor (You are free to use your preferred text editor such as `nano` for the exercises):
 
 - `Esc button + i` means "insert"
 - `Esc button + :w` means "write"
@@ -27,7 +27,9 @@ These instructions use `Vim` as text editor:
 - `Esc button + /` means "search text"
 - `Esc button + u` means "undo"
 
-and uses `example.org` to provide example values.
+and uses `example.org` to provide example values. You will use your NRENs domain name instead of `example.org` in the exercises. For example, if your NREN domain name is `botsren.org.bw`, you will use `botsren.org.bw`.
+
+Please note that the machine domain name is different from the institutional domain name. The machine domain name is used to identify the machine in the network, while the institutional domain name is used to identify the institution in the federated access system. For this exercise, the machine domain name is `idp-[participant-id].ubuntunet.net`. For example if your participant ID is `01`, the machine domain name will be `idp-01.ubuntunet.net`. If the participant ID is `22`, the machine domain name will be `idp-22.ubuntunet.net`.
 
 Please remember to **replace all occurencences** of the `example.org` domain name with the institutional domain name.
 
@@ -52,7 +54,7 @@ Please remember to **replace all occurencences** of the `example.org` domain nam
 
 03. Set the OpenLDAP hostname:
 
-    **!!!ATTENTION!!!**: Replace, from the commands below, the label `<YOUR-SERVER-IP-ADDRESS>` with the IP address of the OpenLDAP server, the label `ldap.example.org` with the Full Qualified Domain Name of the OpenLDAP server and the label `<HOSTNAME>` with the OpenLDAP server hostname.
+    **!!!ATTENTION!!!**: Replace, from the commands below, the label `<YOUR-SERVER-IP-ADDRESS>` with the IP address of the OpenLDAP server, the label `ldap.example.org` with the Full Qualified Domain Name (FQDN) of the OpenLDAP server (`idp-0[participant-id].ubuntunet.net`) and the label `<HOSTNAME>` with the OpenLDAP server hostname (`idp-[participant-id]`). You will be provided with these details.
 
     - ``` text
       echo "<YOUR-SERVER-IP-ADDRESS> ldap.example.org <HOSTNAME>" >> /etc/hosts
@@ -82,44 +84,6 @@ Select & Configure APT with your preferred mirror.
     apt update && apt install apt-transport-https
     ```
 
-03. Change the default mirror:
-
-    - Debian example:
-
-      ``` text
-      bash -c 'cat > /etc/apt/sources.list.d/garr.sources <<EOF
-      Types: deb
-      URIs: https://debian.mirror.garr.it/debian/
-      Suites: $(lsb_release -cs) $(lsb_release -cs)-updates $(lsb_release -cs)-backports
-      Components: main
-      Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
-
-      Types: deb
-      URIs: https://debian.mirror.garr.it/debian-security/
-      Suites: $(lsb_release -cs)-security
-      Components: main
-      Signed-By: /usr/share/keyrings/debian-archive-keyring.gpg
-      EOF'
-      ```
-
-    - Ubuntu example:
-
-      ``` text
-      bash -c 'cat > /etc/apt/sources.list.d/garr.sources <<EOF
-      Types: deb
-      URIs: https://ubuntu.mirror.garr.it/ubuntu/
-      Suites: $(lsb_release -cs) $(lsb_release -cs)-updates $(lsb_release -cs)-backports
-      Components: main universe restricted multiverse
-      Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-
-      Types: deb
-      URIs: https://ubuntu.mirror.garr.it/ubuntu-archive/
-      Suites: $(lsb_release -cs)-security
-      Components: main universe restricted multiverse
-      Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg
-      EOF'
-      ```
-
 [[TOC](#table-of-contents)]
 
 ## Installation
@@ -140,7 +104,7 @@ Select & Configure APT with your preferred mirror.
 
     - Create the `debconf-slapd.conf`:
 
-      **NOTE: This HOWTO considers the following example values that have to be changed as your needs:**
+      **NOTE: This HOWTO considers the following example values that have to be changed as your needs:** I highly recommend we use the same passwords throughout to aid us in troubleshooting potential issues. An example is our `SE20261` password we are using for login to the VM.
 
         - `<LDAP-ROOT-PW_CHANGEME>` ==\> `ciaoldap`
         - `<INSTITUTE-DOMAIN_CHANGEME>` ==\> `example.org`
@@ -270,9 +234,7 @@ Select & Configure APT with your preferred mirror.
       vim /etc/ldap/scratch/add_ou.ldif
       ```
 
-      **Be carefull!** Replace `dc=example,dc=org` with distinguish name ([DN](https://ldap.com/ldap-dns-and-rdns/)) of the institutional domain name. (Check [Notes](#notes) for help)
-
-      The following script can help to convert a domain name into a distinguished name: [domain2dn.sh](./domain2dn.sh)
+      **Be carefull!** Replace `dc=example,dc=org` with distinguish name ([DN](https://ldap.com/ldap-dns-and-rdns/)) of the institutional domain name. (Check [Notes](#notes) for help). For example, if your institutional domain name is `zamren.zm`, the distinguish name will be `dc=zamren,dc=zm`. If the domain name is `botsren.org.bw`, the distinguish name will be `dc=botsren,dc=org,dc=bw`.
 
     - ``` text
       sudo ldapadd -x -D 'cn=admin,dc=example,dc=org' -w '<LDAP-ROOT-PW_CHANGEME>' -H ldapi:/// -f /etc/ldap/scratch/add_ou.ldif
@@ -299,7 +261,7 @@ Select & Configure APT with your preferred mirror.
       vim /etc/ldap/scratch/add_idpuser.ldif
       ```
 
-      **Be carefull!** Replace `dc=example,dc=org` with distinguish name ([DN](https://ldap.com/ldap-dns-and-rdns/)) of the institutional domain name and `<INSERT-HERE-IDPUSER-PW>` with password the `idpuser` user will use! (Check [Notes](#notes) for help)
+      **Be carefull!** Replace `dc=example,dc=org` with distinguish name ([DN](https://ldap.com/ldap-dns-and-rdns/)) of the institutional domain name and `<INSERT-HERE-IDPUSER-PW>` with password the `idpuser` user will use! (Check [Notes](#notes) for help). I highly recommend we use the same passwords throughout to aid us in troubleshooting potential issues. An example is our `SE20261` password we are using for login to the VM.
 
         The following script can help to convert a domain name into a distinguished name: [domain2dn.sh](./domain2dn.sh)
 
@@ -359,11 +321,17 @@ Select & Configure APT with your preferred mirror.
 07. Install needed schemas (eduPerson, SCHAC):
 
     - ``` text
-      sudo wget https://raw.githubusercontent.com/REFEDS/eduperson/master/schema/openldap/eduperson.ldif -O /etc/ldap/schema/eduperson.ldif
+      sudo curl -L \
+      "https://api.github.com/repos/REFEDS/eduperson/contents/schema/openldap/eduperson.ldif?ref=master" \
+      | python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['content']).decode())" \
+      | sudo tee /etc/ldap/schema/eduperson.ldif > /dev/null
       ```
 
     - ``` text
-      sudo wget https://raw.githubusercontent.com/REFEDS/SCHAC/main/schema/openldap.ldif -O /etc/ldap/schema/schac.ldif
+      sudo curl -L \
+      "https://api.github.com/repos/REFEDS/SCHAC/contents/schema/openldap.ldif?ref=main" \
+      | python3 -c "import sys,json,base64; print(base64.b64decode(json.load(sys.stdin)['content']).decode())" \
+      | sudo tee /etc/ldap/schema/schac.ldif > /dev/null
       ```
 
     - ``` text
@@ -490,23 +458,23 @@ Select & Configure APT with your preferred mirror.
 
 12. Add the first user:
 
-    - Configure `user1.ldif`:
+    - Configure `user1.ldif` with the following content:
 
       ```bash
       sudo bash -c 'cat > /etc/ldap/scratch/user1.ldif <<EOF
-      # USERNAME: user1 , PASSWORD: hello-world-12
-      dn: uid=user1,ou=people,dc=aai-test,dc=garr,dc=it
+      # USERNAME: alex , PASSWORD: hello-world-12
+      dn: uid=alex,ou=people,dc=cranecloud,dc=africa
       changetype: add
       objectClass: inetOrgPerson
       objectClass: eduPerson
-      uid: user1
-      sn: User1
-      givenName: Test
-      cn: Test User1
-      displayName: Test User1
+      uid: alex
+      sn: Mwotil
+      givenName: Alex
+      cn: Alex Mwotil
+      displayName: Alex Mwotil
       preferredLanguage: it
       userPassword: hello-world-12
-      mail: test.user1@institute-domain.it
+      mail: alex@cranecloud.africa
       eduPersonAffiliation: student
       eduPersonAffiliation: staff
       eduPersonAffiliation: member
@@ -519,9 +487,7 @@ Select & Configure APT with your preferred mirror.
       vim /etc/ldap/scratch/user1.ldif
       ```
 
-      **Be carefull!** Replace `dc=example,dc=org` with distinguish name ([DN](https://ldap.com/ldap-dns-and-rdns/)) of the institutional domain name, `example.org` with the institutional domain name. (Check [Notes](#notes) for help).
-
-      The following script can help to convert a domain name into a distinguished name: [domain2dn.sh](./domain2dn.sh)
+      **Be carefull!** Ensure to adapt it your institutional domain name, your own user/username and the password you want to use for your first user. I have used `alex` as username and `hello-world-12` as password for this example. Also, my institutional domain name is `cranecloud.africa`. You will use your own institutional domain name. (Check [Notes](#notes) for help)
 
     - ``` text
       sudo ldapadd -x -D 'cn=admin,dc=example,dc=org' -w '<LDAP-ROOT-PW_CHANGEME>' -H ldapi:/// -f /etc/ldap/scratch/user1.ldif
@@ -529,13 +495,17 @@ Select & Configure APT with your preferred mirror.
 
       **Be carefull!** Replace `dc=example,dc=org` with distinguish name ([DN](https://ldap.com/ldap-dns-and-rdns/)) of the institutional domain name and `<LDAP-ROOT-PW_CHANGEME>` with the LDAP ROOT password!
 
-13. Check that `idpuser` can find the inserted `user1`:
+13. Check that `idpuser` can find the inserted `user1` or whatever username you have used for your first user:
 
     ```bash
     sudo ldapsearch -x -D 'cn=idpuser,ou=system,dc=example,dc=org' -w '<INSERT-HERE-IDPUSER-PW>' -b 'uid=user1,ou=people,dc=example,dc=org'
     ```
 
     **Be carefull!** Replace `dc=example,dc=org` with distinguish name ([DN](https://ldap.com/ldap-dns-and-rdns/)) of the institutional domain name and `<INSERT-HERE-IDPUSER-PW>` with the _idpuser_ password!
+
+
+    **The rest of the steps (14+) are supplementary. If you reached here, congratulations!**
+
 
 14. Check that LDAP has TLS (`anonymous` MUST BE returned):
 
