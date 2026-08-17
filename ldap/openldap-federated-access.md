@@ -29,7 +29,7 @@ These instructions use `Vim` as text editor (You are free to use your preferred 
 
 and uses `example.org` to provide example values. You will use your NRENs domain name instead of `example.org` in the exercises. For example, if your NREN domain name is `botsren.org.bw`, you will use `botsren.org.bw`.
 
-Please note that the machine domain name is different from the institutional domain name. The machine domain name is used to identify the machine in the network, while the institutional domain name is used to identify the institution in the federated access system. For this exercise, the machine domain name is `idp-[participant-id].ubuntunet.net`. For example if your participant ID is `01`, the machine domain name will be `idp-01.ubuntunet.net`. If the participant ID is `22`, the machine domain name will be `idp-22.ubuntunet.net`.
+Please note that the machine domain name is different from the institutional domain name. The machine domain name is used to identify the machine in the network, while the institutional domain name is used to identify the institution in the federated access system. For this exercise, the machine domain name is `idp-[participant-id].ubuntunet.org`. For example if your participant ID is `01`, the machine domain name will be `idp-01.ubuntunet.org`. If the participant ID is `22`, the machine domain name will be `idp-22.ubuntunet.org`.
 
 Please remember to **replace all occurencences** of the `example.org` domain name with the institutional domain name.
 
@@ -54,7 +54,7 @@ Please remember to **replace all occurencences** of the `example.org` domain nam
 
 03. Set the OpenLDAP hostname:
 
-    **!!!ATTENTION!!!**: Replace, from the commands below, the label `<YOUR-SERVER-IP-ADDRESS>` with the IP address of the OpenLDAP server, the label `ldap.example.org` with the Full Qualified Domain Name (FQDN) of the OpenLDAP server (`idp-0[participant-id].ubuntunet.net`) and the label `<HOSTNAME>` with the OpenLDAP server hostname (`idp-[participant-id]`). You will be provided with these details.
+    **!!!ATTENTION!!!**: Replace, from the commands below, the label `<YOUR-SERVER-IP-ADDRESS>` with the IP address of the OpenLDAP server, the label `ldap.example.org` with the Full Qualified Domain Name (FQDN) of the OpenLDAP server (`idp-0[participant-id].ubuntunet.org`) and the label `<HOSTNAME>` with the OpenLDAP server hostname (`idp-[participant-id]`). You will be provided with these details.
 
     - ``` text
       echo "<YOUR-SERVER-IP-ADDRESS> ldap.example.org <HOSTNAME>" >> /etc/hosts

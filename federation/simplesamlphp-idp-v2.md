@@ -85,7 +85,7 @@ This HOWTO uses `example.org` and `idp.example.org` to provide this guide with e
 Please remember to **replace all occurencences** of the `example.org` value with the IdP domain name
 and `idp.example.org` value with the Full Qualified Name of the Identity Provider.
 
-For our Lab, if your participant ID is `01`, then your IdP hostname will be `idp-01` and your IdP Full Qualified Domain Name will be `idp-01.ubuntunet.net`. If your participant ID is `15`, then your IdP hostname will be `idp-15` and your IdP Full Qualified Domain Name will be `idp-15.ubuntunet.net`. And so on.
+For our Lab, if your participant ID is `01`, then your IdP hostname will be `idp-01` and your IdP Full Qualified Domain Name will be `idp-01.ubuntunet.org`. If your participant ID is `15`, then your IdP hostname will be `idp-15` and your IdP Full Qualified Domain Name will be `idp-15.ubuntunet.org`. And so on.
 
 Your LDAP domain name is your institutional domain name. For example, if your institutional domain name is `botsren.org.bw`, then your LDAP domain name will be `botsren.org.bw` and your LDAP distinguished name will be `dc=botsren,dc=org,dc=bw`. If your institutional domain name is `zamren.zm`, then your LDAP domain name will be `zamren.zm` and your LDAP distinguished name will be `dc=zamren,dc=zm`. And so on.
 
@@ -242,7 +242,7 @@ Your LDAP domain name is your institutional domain name. For example, if your in
    Use the Apache plugin, which will automatically detect your vhost, obtain the certificate, and edit the Apache configuration to enable HTTPS.
 
    ```bash
-   sudo certbot --apache -d idp-[participant_id].ubuntunet.net
+   sudo certbot --apache -d idp-[participant_id].ubuntunet.org
    ```
 
    You will be prompted to:
@@ -250,16 +250,16 @@ Your LDAP domain name is your institutional domain name. For example, if your in
    1. Enter an email address (used for renewal/expiry notifications).
    2. Agree to the Let's Encrypt Terms of Service.
    3. Optionally share your email with the EFF.
-   4. Choose whether to redirect all HTTP traffic to HTTPS — **choose the redirect option (recommended)**, so `http://idp-[participant id].ubuntunet.net` automatically forwards to `https://`.
+   4. Choose whether to redirect all HTTP traffic to HTTPS — **choose the redirect option (recommended)**, so `http://idp-[participant id].ubuntunet.org` automatically forwards to `https://`.
 
    If successful, Certbot will report where the certificate files were saved, typically:
 
       ```
-      /etc/letsencrypt/live/idp-[participant_id].ubuntunet.net/fullchain.pem
-      /etc/letsencrypt/live/idp-[participant_id].ubuntunet.net/privkey.pem
+      /etc/letsencrypt/live/idp-[participant_id].ubuntunet.org/fullchain.pem
+      /etc/letsencrypt/live/idp-[participant_id].ubuntunet.org/privkey.pem
       ```
 
-4. Put SSL credentials in the right place (Your FQDN is `idp-[participant_id].ubuntunet.net`):
+4. Put SSL credentials in the right place (Your FQDN is `idp-[participant_id].ubuntunet.org`):
    * HTTPS Server Certificate (Public Key) inside `/etc/ssl/certs/$(hostname -f).crt`
       ```bash
       ln -s /etc/letsencrypt/live/<FQDN>/fullchain.pem /etc/ssl/certs/$(hostname -f).crt
