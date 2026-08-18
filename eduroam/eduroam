@@ -1,0 +1,125 @@
+server eduroam {
+
+listen {
+
+        type = auth
+        ipaddr = *
+        port = 0
+        limit {
+              max_connections = 0
+              lifetime = 0
+              idle_timeout = 0
+        }
+}
+listen {
+        ipaddr = *
+        port = 0
+        type = acct
+        limit {
+        }
+}
+listen {
+        ipv6addr = ::
+        port = 0
+        type = acct
+        limit {
+        }
+}
+authorize {
+        update request {
+                Operator-Name := "1renu.ac.ug" #replace renu.ac.ug this with your institution realm
+        }
+        filter_username
+        filter_password
+        preprocess
+        chap
+        mschap
+        digest
+        suffix
+        eap {
+                ok = return
+        }
+        files
+        -sql
+        auth_log
+        ldap
+        if (User-Password ) {
+                update control {
+                        Auth-Type := ldap
+                }
+        }
+        expiration
+        logintime
+        pap
+}
+authenticate {
+        Auth-Type PAP {
+                ldap
+        }
+        Auth-Type CHAP {
+                chap
+        }
+        Auth-Type MS-CHAP {
+                mschap
+        }
+        mschap
+        digest
+        eap
+        ldap
+}
+preacct {
+        preprocess
+        acct_unique
+        suffix
+        files
+}
+accounting {
+        detail
+        unix
+        -sql
+        exec
+        attr_filter.accounting_response
+}
+session {
+}
+post-auth {
+        if (session-state:User-Name && reply:User-Name && request:User-Name && (reply:User-Name == request:User-Name)) {
+                update reply {
+                        &User-Name !* ANY
+                }
+        }
+        update {
+                &reply: += &session-state:
+        }
+        -sql
+        exec
+        remove_reply_message_if_eap
+        Post-Auth-Type REJECT {
+                -sql
+                attr_filter.access_reject
+                eap
+                remove_reply_message_if_eap
+        }
+        Post-Auth-Type Challenge {
+        }
+        Post-Auth-Type Client-Lost {
+        }
+        if (EAP-Key-Name && &reply:EAP-Session-Id) {
+                update reply {
+                        &EAP-Key-Name := &reply:EAP-Session-Id
+                }
+        }
+}
+pre-proxy {
+        pre_proxy_log
+        if("%{Packet-Type}" != "Accounting-Request") {
+                attr_filter.pre-proxy
+        }
+}
+post-proxy {
+        eap
+        post_proxy_log
+        attr_filter.post-proxy
+
+}
+}
