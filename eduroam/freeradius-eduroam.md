@@ -431,8 +431,10 @@ sudo chown -R freerad:freerad /etc/freeradius/
 Navigate to the FreeRADIUS certificate directory:
 ```bash
 cd /etc/freeradius/certs/
+```
 
 Generate the certificates:
+
 ```bash
 sudo make
 ```
@@ -493,11 +495,11 @@ base_dn = "dc=example,dc=org"
 Replace the example values with the LDAP information provided for your group.
 For example:
 ```
-server = "ldap://ldap.gtp.renu.ac.ug" 
+server = "ldap://idp-08.ubuntunet.org" # replace with the FQDN of your LDAP server 
 port = 389
-identity = "cn=admin,dc=gtp,dc=renu,dc=ac,dc=ug" 
-password = "your-bind-password" 
-base_dn = "dc=gtp,dc=renu,dc=ac,dc=ug"
+identity = "cn=idpuser,ou=system,dc=zimren,dc=ac,dc=zw" 
+password = "password used for idpuser" 
+base_dn = "ou=people,dc=zimren,dc=ac,dc=zw"
 ```
 ### 4.3 Configure the LDAP User Filter 
 In the `user` section of the LDAP configuration, configure FreeRADIUS to search for users using either the `uid` or `cn` attribute:
@@ -515,10 +517,12 @@ For example, a username of bnamuli results in a search equivalent to:
 ### 4.4 Test the LDAP Connection 
 Before testing authentication through FreeRADIUS, verify that the LDAP server can be queried using the configured bind account:
 ```bash
-ldapsearch -x \ -H ldap://ldap.example.org \ 
--D "cn=admin,dc=example,dc=org" \ 
--W \ -b "dc=example,dc=org" \ 
-'(|(uid=testuser)(cn=testuser))'
+ldapsearch -x \
+  -H ldap://idp-[x].ubuntunet.org \
+  -D "cn=idpuser,ou=system,dc=example,dc=org" \
+  -W \
+  -b "ou=people,dc=example,dc=org" \
+  '(|(uid=user1)(cn=user1))'
 ```
 If this command fails to work install the ldap-utils then rerun the command 
 ```bash

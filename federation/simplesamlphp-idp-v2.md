@@ -1,7 +1,5 @@
 # HOWTO Install and Configure a SimpleSAMLphp IdP v2.x on Debian-Ubuntu Linux with Composer
 
-<img width="120px" src="https://wiki.idem.garr.it/IDEM_Approved.png" />
-
 ## Table of Contents
 
 1. [Requirements](#requirements)
