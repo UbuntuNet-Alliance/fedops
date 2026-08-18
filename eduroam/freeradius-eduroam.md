@@ -153,7 +153,7 @@ Before configuring eduroam, verify that the FreeRADIUS server can successfully a
 
 Add a test user to the users file. Replace the example realm with your group's realm.
 ```bash
-sudo sed -i 'testuser@renu.ac.ug   Cleartext-Password := "Test1234"' /etc/freeradius/mods-config/files/authorize
+sudo sed -i '1i testuser@renu.ac.ug   Cleartext-Password := "Test1234"' /etc/freeradius/mods-config/files/authorize
 ```
 
 > Cleartext is used here only so every EAP method works in the lab. In production
@@ -274,8 +274,8 @@ Copy the provided `eduroam-inner-tunnel` configuration into the file, then save 
 Create symbolic links from `sites-available` to `sites-enabled` to enable both virtual servers:
 
 ```bash
-sudo ln -s /etc/freeradius/3.0/sites-available/eduroam /etc/freeradius/3.0/sites-enabled/eduroam 
-sudo ln -s /etc/freeradius/3.0/sites-available/eduroam-inner-tunnel  /etc/freeradius/3.0/sites-enabled/eduroam-inner-tunnel
+sudo ln -s /etc/freeradius/sites-available/eduroam /etc/freeradius/sites-enabled/eduroam 
+sudo ln -s /etc/freeradius/sites-available/eduroam-inner-tunnel  /etc/freeradius/sites-enabled/eduroam-inner-tunnel
 ```
 
 ### 3.2 Configure `proxy.conf`
