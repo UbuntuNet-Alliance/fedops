@@ -63,9 +63,9 @@ below refers back to these:
 | Name | Meaning | Example | Your value |
 |------|---------|---------|-----------|
 | `MY_REALM` | Your group's realm | `renu.ac.ug` | |
-| `MY_IP` | Your institution server's IP | `10.20.0.11` | |
-| `FLR1_IP` | Federation server 1 | `10.10.0.1` | |
-| `FLR2_IP` | Federation server 2 | `10.10.0.2` | |
+| `MY_IP` | Your institution server's IP | `<YOUR_IP_ADDRESS` | |
+| `FLR1_IP` | Federation server 1 | `196.32.212.213` | |
+| `FLR2_IP` | Federation server 2 | `196.32.212.220` | |
 | `FED_SECRET` | Shared secret to the federation | `eduroam-lab-2026` | |
 | `TEST_USER` | Local test user (with your realm) | `testuser@renu.ac.ug` | |
 | `TEST_PASS` | Test user password | `Test1234` | |
