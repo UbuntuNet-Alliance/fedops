@@ -445,6 +445,12 @@ ls -l *.pem
 ```
 Ensure that the certificate generation completes without errors before proceeding.
 
+If there are any errors or need to regenerate the certificates, you can clean the existing certificates and rerun the `make` command as follows, and then repeat the certificate generation process:
+```bash
+  cd /etc/freeradius/certs/
+  sudo make destroycerts
+```
+
 #### 3.4.6 Configure the EAP Module
 Update the EAP module so that FreeRADIUS uses the same private key password that was configured in the certificate `.cnf` files.
 
@@ -504,8 +510,12 @@ base_dn = "ou=people,dc=zimren,dc=ac,dc=zw"
 ### 4.3 Configure the LDAP User Filter 
 In the `user` section of the LDAP configuration, configure FreeRADIUS to search for users using either the `uid` or `cn` attribute:
 ```
-user { base_dn = "${..base_dn}" 
-filter = "(|(uid=%{%{Stripped-User-Name}:-%{User-Name}})(cn=%{%{Stripped-User-Name}:-%{User-Name}}))" }
+user {
+
+  base_dn = "${..base_dn}" 
+  filter = "(|(uid=%{%{Stripped-User-Name}:-%{User-Name}})(cn=%{%{Stripped-User-Name}:-%{User-Name}}))" 
+
+}
 ```
 This allows FreeRADIUS to locate an LDAP user whose username is stored in either the `uid` or `cn` attribute.
 
