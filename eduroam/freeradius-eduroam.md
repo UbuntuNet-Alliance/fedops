@@ -274,8 +274,8 @@ Copy the provided `eduroam-inner-tunnel` configuration into the file, then save 
 Create symbolic links from `sites-available` to `sites-enabled` to enable both virtual servers:
 
 ```bash
-sudo ln -s /etc/freeradius/3.0/sites-available/eduroam /etc/freeradius/3.0/sites-enabled/eduroam 
-sudo ln -s /etc/freeradius/3.0/sites-available/eduroam-inner-tunnel  /etc/freeradius/3.0/sites-enabled/eduroam-inner-tunnel
+sudo ln -s /etc/freeradius/sites-available/eduroam /etc/freeradius/sites-enabled/eduroam 
+sudo ln -s /etc/freeradius/sites-available/eduroam-inner-tunnel  /etc/freeradius/sites-enabled/eduroam-inner-tunnel
 ```
 
 ### 3.2 Configure `proxy.conf`
