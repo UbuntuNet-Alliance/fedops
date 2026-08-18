@@ -153,7 +153,7 @@ Before configuring eduroam, verify that the FreeRADIUS server can successfully a
 
 Add a test user to the users file. Replace the example realm with your group's realm.
 ```bash
-sudo sed -i 'testuser@renu.ac.ug   Cleartext-Password := "Test1234"' /etc/freeradius/mods-config/files/authorize
+sudo sed -i '1i testuser@renu.ac.ug   Cleartext-Password := "Test1234"' /etc/freeradius/mods-config/files/authorize
 ```
 
 > Cleartext is used here only so every EAP method works in the lab. In production
