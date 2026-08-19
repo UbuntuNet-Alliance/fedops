@@ -656,3 +656,46 @@ SUCCESS
 The FreeRADIUS debug output should show the EAP-TTLS tunnel being established, the inner authentication request being processed, and an Access-Accept returned to the client.
 
 **Checkpoint**: Ensure that EAP-TTLS authentication is successful before proceeding to federation testing.
+
+### 5.7 Configure the Federation Test
+On your RADIUS server, create a copy of the EAP-TTLS test configuration used in Part 5: 
+cd ~/radius-debug
+cp ttls-pap.conf federation-test.conf 
+
+Open the new configuration
+```bash
+sudo nano federation-test.conf
+```
+
+Configure the test using a valid user belonging to **another group (Institution)**
+For example :
+```
+network={ 
+  ssid="eduroam" 
+  key_mgmt=WPA-EAP eap=TTLS 
+  identity="user2@example.org" 
+  anonymous_identity="anonymous@example.org" 
+  password="USER_PASSWORD" 
+  phase2="auth=PAP" 
+}
+```
+Replace the example realm, username, and password with the information provided by the other group. 
+
+**Important**: The realm must be included in the `anonymous identity`. The federation uses the realm in the outer identity to route the
+authentication request towards the user's home institution. 
+
+### 5.8 Start FreeRADIUS in Debug Mode
+On your RADIUS server, start FreeRADIUS in debug mode: 
+```bash
+sudo freeradius -X
+```
+Leave the terminal running so that you can deserve how the request is processed. 
+
+The group operation the other RADIUS server should also monitor the FreeRADIUS debug output on their server. 
+```bash
+sudo freeradius -X
+```
+You should also run the same test on the other group's RADIUS server. A successful authentication should return an `Access-Accept` for
+both tests.
+
+**Final Checkpoint**: Federation authentication should work successfully in both directions before the lab is considered complete.
