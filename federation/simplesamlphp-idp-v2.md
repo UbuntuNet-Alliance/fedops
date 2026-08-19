@@ -198,7 +198,7 @@ Your LDAP domain name is your institutional domain name. For example, if your in
    | sudo tee /etc/apache2/sites-available/$(hostname -f).conf > /dev/null
    ```
 
-   You need to edit the `/etc/apache2/sites-available/$(hostname -f).conf` file and replace all occurences of `idp.example.org` with your IdP Full Qualified Domain Name except for the three lines below:
+   You need to edit the `/etc/apache2/sites-available/$(hostname -f).conf` file and replace all occurences of `idp.example.org` with your IdP Full Qualified Domain Name:
 
    ```apache
      DocumentRoot /var/www/html/idp.example.org
@@ -209,9 +209,7 @@ Your LDAP domain name is your institutional domain name. For example, if your in
      SSLCertificateKeyFile /etc/ssl/private/idp.example.org.key
    ```
 
-   Replace `idp.example.org` with the result of the command `hostname -f`. In some cases, the hostname may just be `hostname` without the domain name. In that case, you will need to replace `idp.example.org` with this `hostname` value.
-
-   Uncomment the following line in the `/etc/apache2/sites-available/$(hostname -f).conf` file: **Remember to replace `ACME-CA.pem` with the CA certificate you are using for your IdP server. For this exercise, it is `hostname -f`-CA.pem an example being `idp-01-CA.pem`**:
+   Uncomment the following line in the `/etc/apache2/sites-available/$(hostname -f).conf` file: **Remember to replace `ACME-CA.pem` with the CA certificate you are using for your IdP server. For this exercise, it is `hostname -f`-CA.pem an example being `idp-01.ubuntunet.org-CA.pem`**:
 
    ```apache
       SSLCACertificateFile /etc/ssl/certs/ACME-CA.pem
