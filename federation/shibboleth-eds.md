@@ -173,7 +173,8 @@ We are using the unsigned aggregate for the **Systems_Kampala** federation, so n
 
 ```bash
     sudo -i
-    composer require simplesamlphp/simplesamlphp-module-metarefresh
+    cd /var/simplesamlphp/
+    composer require simplesamlphp/simplesamlphp-module-metarefresh --update-no-dev
 
 ```
 
@@ -216,22 +217,28 @@ Copy the configuration template files to the main config directory.
 
 * `vim  /var/simplesamlphp/config/module_metarefresh.php`
 
-At the end of that file just before the last closing `];`, please insert the following:
+Clean or clear the contents of the file and just insert the following:
 
   ```php
-          'systems_kampala' => [
-              'cron' => ['hourly'],
-              'sources' => [
-                  [
-                      'src' => 'https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml',
-                      // No 'certificates' entry: we are not validating a signature on
-                      // this feed, since we're using the unsigned aggregate.
-                  ],
-              ],
-              'expireAfter'  => 60 * 60 * 24 * 4, // drop entities not seen for 4 days
-              'outputDir'    => 'metadata/metarefresh-systems_kampala/',
-              'outputFormat' => 'flatfile',
-          ],
+<?php
+
+$config = [
+    'sets' => [
+        'systems_kampala' => [
+            'cron' => ['hourly'],
+            'sources' => [
+                [
+                    'src' => 'https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml',
+                    // No 'certificates' entry: we are not validating a signature on
+                    // this feed, since we're using the unsigned aggregate.
+                ],
+            ],
+            'expireAfter'  => 60 * 60 * 24 * 4, // drop entities not seen for 4 days
+            'outputDir'    => 'metadata/metarefresh-systems_kampala/',
+            'outputFormat' => 'flatfile',
+        ],
+    ],
+];
   ```
 
 ### 3. Point `config.php` at the metarefresh output
@@ -306,7 +313,7 @@ $config = [
 
 **c. Trigger the refresh**
 
-Either method works; pick one.
+You can first visit `https://idp-f01.cranecloud.africa/simplesaml/module.php/admin/` to verify modules `cron` and `metarefresh` are enabled. 
 
 * **HTTP** — simplest, fine for a lightweight hook like this:
 
