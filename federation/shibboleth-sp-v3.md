@@ -197,16 +197,10 @@ Please note that your machine FQDNs are `sp-xx.ubuntunet.org`. This is different
 
    You need to edit the `/etc/apache2/sites-available/000-$(hostname -f).conf` file and replace all occurences of `sp.example.org` with your SP Full Qualified Domain Name.
 
-   Uncomment the following line in the `/etc/apache2/sites-available/000-$(hostname -f).conf` file: **Remember to replace `ACME-CA.pem` with the CA certificate you are using for your SP server. For this exercise, it is `hostname -f`-CA.pem an example being `sp-01.ubuntunet.org-CA.pem`**:
+   Edit the following line in the `/etc/apache2/sites-available/000-$(hostname -f).conf` file: **Remember to replace `GEANT_TLS_RSA_1.pem` with the CA certificate you are using for your SP server. For this exercise, it is `hostname -f`-CA.pem an example being `sp-01.ubuntunet.org-CA.pem`**:
 
    ```apache
       SSLCACertificateFile /etc/ssl/certs/sp-01.ubuntunet.org-CA.pem
-   ```
-
-   Comment the following line in the `/etc/apache2/sites-available/000-$(hostname -f).conf` file:
-
-   ```apache
-      #SSLCACertificateFile /etc/ssl/certs/GEANT_TLS_RSA_1.pem
    ```
 
     We can now go ahead and restart the Apache2 service to apply the changes:
