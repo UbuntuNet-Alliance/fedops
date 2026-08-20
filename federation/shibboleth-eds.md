@@ -17,9 +17,10 @@ The EDS is a set of Javascript and CSS files, so installing it and using it is s
 6. [Blacklist - How to disallow IdPs to access the federated resource](#blacklist---how-to-disallow-idps-to-access-the-federated-resource)
    1. [How to disallow the access to IdPs by specifying their entityID](#how-to-disallow-the-access-to-idps-by-specifying-their-entityid)
    2. [How to disallow the access to IdPs that support a specific Entity Category](#how-to-disallow-the-access-to-idps-that-support-a-specific-entity-category)
-7. [Testing](#testing)
-8. [Authors](#authors)
-9. [Credits](#credits)
+7. [Connect the SimpleSAMLphp IdP to the Federation](#connect-the-simplesamlphp-idp-to-the-federation)
+8. [Testing](#testing)
+9. [Authors](#authors)
+10. [Credits](#credits)
 
 ## Requirements
 
@@ -92,8 +93,7 @@ Make sure to amend `this.redirectAllow` to reflect your server name. Replace `ex
 this.redirectAllow = [ "^https:\/\/sp-f01\.cranecloud\.africa\/Shibboleth\.sso\/Login.*$" ];
 ```
 
-If you need to allow redirects to more than one host or path (e.g. a second SP, or a separate logout endpoint), add additional patterns as extra entries in the array separated by a coma.
-
+If you need to allow redirects to more than one host or path (e.g. a second SP, or a separate logout endpoint), add additional patterns as extra entries in the array rather than repeating the same one - separated by a coma. 
 
 Find here the EDS Configuration Options: https://wiki.shibboleth.net/confluence/display/EDS10/3.+Configuration
 
@@ -113,7 +113,7 @@ Now remember we had set up a 1-1 SP-IdP relationship, but this discovery service
                 backingFilePath="idp-metadata.xml" maxRefreshDelay="7200" /> -->
 ```
 
-We can now proceed with the new `MetadataProvider` configuration (Our combined federatation metadata (this is where I have added our IdPs & SPs) is on https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml):
+We can now proceed with the new `MetadataProvider` configuration:
 
 1. Modify "**shibboleth2.xml**":
    * `vim /etc/shibboleth/shibboleth2.xml`
@@ -157,13 +157,133 @@ DOC: [https://shibboleth.atlassian.net/wiki/spaces/SP3/pages/2063696198/ExcludeM
        </MetadataProvider>
        ```
 
+   > Note: unlike the `Include` filter, the `Exclude` filter's child elements must be `<Exclude>`, not `<Include>` — using `<Include>` here will not exclude anything.
+
 2. Restart "**shibd**" service:
 
    * `systemctl restart shibd.service`
 
+## Connect the SimpleSAMLphp IdP to the Federation
 
-## Connect the IdP to the Federation
+The SimpleSAMLphp IdP can also load Service Provider metadata directly from the federation instead of maintaining a manually curated `saml20-sp-remote.php` file. The registry publishes an aggregate metadata file per federation rather than a per-entity query endpoint, so the standard way to consume it is the `metarefresh` module: it periodically downloads the aggregate, converts it into flatfile metadata, and SimpleSAMLphp loads it like any other metadata source.
 
+We are using the unsigned aggregate for the **Systems_Kampala** federation, so no signature validation is configured below. If you later switch to a signed feed, add a `certificates` entry pointing at the federation's signing certificate.
+
+### 1. Enable the metarefresh module
+
+```bash
+    sudo -i
+    composer require simplesamlphp/simplesamlphp-module-metarefresh
+
+```
+
+Open/Edit the `/var/simplesamlphp/config/config.php` and enable the `cron` and `metarefresh` modules 
+
+```bash
+    vim /var/simplesamlphp/config/config.php
+```
+
+Notice the two lines added and as shown below:
+
+```
+    'module.enable' => [
+        'exampleauth' => false,
+        'core' => true,
+        'admin' => true,
+        'saml' => true,
+        'consent' => true,
+        'ldap' => true,
+        'cron' => true,
+        'metarefresh' => true,
+    ],
+```
+
+### 2. Configure the metarefresh source
+
+Copy the configuration template files to the main config directory.
+
+```bash
+    cd ~ 
+    # Copy the Cron config file
+    cp /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/modules/cron/config/module_cron.php.dist /var/simplesamlphp/config/module_cron.php
+
+    # Copy the Metarefresh config file
+    cp vendor/simplesamlphp/simplesamlphp/modules/metarefresh/config-templates/module_metarefresh.php /var/simplesamlphp/config/module_metarefresh.php
+
+    cd /var/simplesamlphp/
+
+```
+
+* `vim  /var/simplesamlphp/config/module_metarefresh.php`
+
+At the end of that file just before the last closing `];`, please insert the following:
+
+  ```php
+          'systems_kampala' => [
+              'cron' => ['hourly'],
+              'sources' => [
+                  [
+                      'src' => 'https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml',
+                      // No 'certificates' entry: we are not validating a signature on
+                      // this feed, since we're using the unsigned aggregate.
+                  ],
+              ],
+              'expireAfter'  => 60 * 60 * 24 * 4, // drop entities not seen for 4 days
+              'outputDir'    => 'metadata/metarefresh-systems_kampala/',
+              'outputFormat' => 'flatfile',
+          ],
+  ```
+
+### 3. Point `config.php` at the metarefresh output
+
+* `vim /var/simplesamlphp/config/config.php`
+
+You can edit out the following section:
+
+```php
+    'metadata.sources' => [
+    ['type' => 'flatfile'],
+    ],
+```
+
+with the following:
+
+  ```php
+  'metadata.sources' => [
+      ['type' => 'flatfile'],
+      ['type' => 'flatfile', 'directory' => 'metadata/metarefresh-systems_kampala'],
+  ],
+  ```
+
+### 4. Create the output directory
+
+```bash
+sudo mkdir -p /var/simplesamlphp/metadata/metarefresh-systems_kampala
+sudo chown www-data /var/simplesamlphp/metadata/metarefresh-systems_kampala
+```
+
+### 5. Schedule the refresh
+
+Metarefresh only updates when it's run. Enable the `cron` module, set a cron secret in `config.php`, and schedule a job on the same tag used above (`hourly`):
+
+```bash
+touch /var/simplesamlphp/modules/cron/enable
+```
+
+```
+0 * * * * curl -s "https://idp-f01.cranecloud.africa/simplesaml/module.php/cron/cron.php?key=<your-cron-secret>&tag=hourly" > /dev/null
+```
+
+### 6. Clean up `/metadata`
+
+Check whether `https://sp-f01.cranecloud.africa/shibboleth` is already published in the Systems_Kampala federation metadata. If it is, the manual entry in `saml20-sp-remote.php` becomes redundant — and having the same entityID in two metadata sources at once has undefined precedence. Keep both only long enough to confirm the federation copy resolves correctly, then remove the manual block:
+
+```bash
+mkdir /var/simplesamlphp/metadata.old
+mv /var/simplesamlphp/metadata/saml20-sp-remote.php /var/simplesamlphp/metadata.old/
+```
+
+Leave `saml20-idp-hosted.php` in place — that defines your own IdP, not remote SP metadata.
 
 ## Testing
 
