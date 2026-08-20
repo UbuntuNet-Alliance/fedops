@@ -161,6 +161,10 @@ DOC: [https://shibboleth.atlassian.net/wiki/spaces/SP3/pages/2063696198/ExcludeM
 
    * `systemctl restart shibd.service`
 
+
+## Connect the IdP to the Federation
+
+
 ## Testing
 
 You can now visit `https://<SP-FQDN>/secure` to access the secured resource. You will be presented with the discovery service page that allows you to select an Identity Provider for use with the service provider.
