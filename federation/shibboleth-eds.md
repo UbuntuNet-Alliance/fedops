@@ -8,15 +8,16 @@ The EDS is a set of Javascript and CSS files, so installing it and using it is s
 1. [Requirements](#requirements)
 2. [Installation](#installation)
    1. [Debian/Ubuntu](#debianubuntu)
-4. [Enable EDS on Shibboleth SP](#enable-eds-on-shibboleth-sp)
-5. [Configuration](#configuration)
-6. [Whitelist - How to allow IdPs to access the federated resource](#whitelist---how-to-allow-idps-to-access-the-federated-resource)
-  1. [How to allow the access to IdPs by specifying their entityID](#how-to-allow-the-access-to-idps-by-specifying-their-entityid)
-  2. [How to allow the access to IdPs that support a specific Entity Category](#how-to-allow-the-access-to-idps-that-support-a-specific-entity-category)
-  3. [How to allow the access to IdPs that support SIRTFI](#how-to-allow-the-access-to-idps-that-support-sirtfi)
-7. [Blacklist - How to disallow IdPs to access the federated resource](#blacklist---how-to-disallow-idps-to-access-the-federated-resource)
-  1. [How to disallow the access to IdPs by specifying their entityID](#how-to-disallow-the-access-to-idps-by-specifying-their-entityid)
-  2. [How to disallow the access to IdPs that support a specific Entity Category](#how-to-disallow-the-access-to-idps-that-support-a-specific-entity-category)
+3. [Enable EDS on Shibboleth SP](#enable-eds-on-shibboleth-sp)
+4. [Configuration](#configuration)
+5. [Whitelist - How to allow IdPs to access the federated resource](#whitelist---how-to-allow-idps-to-access-the-federated-resource)
+   1. [How to allow the access to IdPs by specifying their entityID](#how-to-allow-the-access-to-idps-by-specifying-their-entityid)
+   2. [How to allow the access to IdPs that support a specific Entity Category](#how-to-allow-the-access-to-idps-that-support-a-specific-entity-category)
+   3. [How to allow the access to IdPs that support SIRTFI](#how-to-allow-the-access-to-idps-that-support-sirtfi)
+6. [Blacklist - How to disallow IdPs to access the federated resource](#blacklist---how-to-disallow-idps-to-access-the-federated-resource)
+   1. [How to disallow the access to IdPs by specifying their entityID](#how-to-disallow-the-access-to-idps-by-specifying-their-entityid)
+   2. [How to disallow the access to IdPs that support a specific Entity Category](#how-to-disallow-the-access-to-idps-that-support-a-specific-entity-category)
+7. [Testing](#testing)
 8. [Authors](#authors)
 9. [Credits](#credits)
 
@@ -42,7 +43,7 @@ The EDS is a set of Javascript and CSS files, so installing it and using it is s
    cd shibboleth-embedded-ds-1.4.0
 
    apt install make
-   
+
    make install
    ```
 
@@ -57,11 +58,11 @@ The EDS is a set of Javascript and CSS files, so installing it and using it is s
 
 ## Enable EDS on Shibboleth SP
 
-1. Update "`shibboleth2.xml`" file to the new Discovery Service page:
-   * `vim /etc/shibboleth/shibboleth2.xml `
- 
+1. Update "`shibboleth2.xml`" file to point to the new Discovery Service page:
+   * `vim /etc/shibboleth/shibboleth2.xml`
+
      ```xml
-     <SSO discoveryProtocol="SAMLDS" 
+     <SSO discoveryProtocol="SAMLDS"
           discoveryURL="https://###YOUR.SP.FQDN###/shibboleth-ds/index.html">
         SAML2
      </SSO>
@@ -81,12 +82,18 @@ The EDS is a set of Javascript and CSS files, so installing it and using it is s
 
 ## Configuration
 
-The behaviour of Shibboleth Embedded Discovery Service is controlled by `IdPSelectUIParms` class contained in `/etc/shibboleth-ds/idpselect_config.js`.
+The behaviour of Shibboleth Embedded Discovery Service is controlled by the `IdPSelectUIParms` class contained in `/etc/shibboleth-ds/idpselect_config.js`.
 
-In the most of cases you have to modify only this file to change the behaviour of Discovery Service.
+In most cases you only need to modify this file to change the behaviour of the Discovery Service.
 
-Make sure to amend `this.redirectAllow` to reflect your server name. Please replace the `example.org` with the FQDN of your Shibboleth Service Provider. For example, my SP FQDN is `sp-f01.cranecloud.africa`, I have set:
-`this.redirectAllow = [ "^https:\/\/sp-f01\.cranecloud\.africa\/Shibboleth\.sso\/Login.*$" , "^https:\/\/sp-f01\.cranecloud\.africa\/Shibboleth\.sso\/Login.*$" ];`
+Make sure to amend `this.redirectAllow` to reflect your server name. Replace `example.org` with the FQDN of your Shibboleth Service Provider. For example, my SP FQDN is `sp-f01.cranecloud.africa`, so I have set:
+
+```js
+this.redirectAllow = [ "^https:\/\/sp-f01\.cranecloud\.africa\/Shibboleth\.sso\/Login.*$" ];
+```
+
+If you need to allow redirects to more than one host or path (e.g. a second SP, or a separate logout endpoint), add additional patterns as extra entries in the array separated by a coma.
+
 
 Find here the EDS Configuration Options: https://wiki.shibboleth.net/confluence/display/EDS10/3.+Configuration
 
@@ -99,20 +106,21 @@ I have put some sample IdPs in the whitelist/blacklist, but you can add/remove t
 DOC: [https://shibboleth.atlassian.net/wiki/spaces/SP3/pages/2063696201/IncludeMetadataFilter](https://shibboleth.atlassian.net/wiki/spaces/SP3/pages/2063696201/IncludeMetadataFilter)
 
 Now remember we had set up a 1-1 SP-IdP relationship, but this discovery service exercise allows us to relax the relationship for multiple entities. In the file `/etc/shibboleth/shibboleth2.xml` please comment out the `MetadataProvider` line we had earlier configured. An example from my side commented out:
+
 ```xml
-        <!--    <MetadataProvider type="XML" validate="true"
-                        url="https://idp-f01.cranecloud.africa/simplesaml/module.php/saml/idp/metadata"
+<!--    <MetadataProvider type="XML" validate="true"
+                url="https://idp-f01.cranecloud.africa/simplesaml/module.php/saml/idp/metadata"
                 backingFilePath="idp-metadata.xml" maxRefreshDelay="7200" /> -->
 ```
 
-We can now proceed with the new `MetadataProvider` configurations:
+We can now proceed with the new `MetadataProvider` configuration (Our combined federatation metadata (this is where I have added our IdPs & SPs) is on https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml):
 
 1. Modify "**shibboleth2.xml**":
-  * `vim /etc/shibboleth/shibboleth2.xml`
+   * `vim /etc/shibboleth/shibboleth2.xml`
 
       ```xml
       <MetadataProvider type="XML"
-                        uri="https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml "
+                        url="https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml"
                         backingFilePath="sysk-metadata.xml">
          <MetadataFilter type="RequireValidUntil" maxValidityInterval="864000" />
          <MetadataFilter type="Include">
@@ -132,17 +140,19 @@ We can now proceed with the new `MetadataProvider` configurations:
 
 ### How to disallow the access to IdPs by specifying their entityID
 
+DOC: [https://shibboleth.atlassian.net/wiki/spaces/SP3/pages/2063696198/ExcludeMetadataFilter](https://shibboleth.atlassian.net/wiki/spaces/SP3/pages/2063696198/ExcludeMetadataFilter)
+
 1. Modify "**shibboleth2.xml**":
 
    * `vim /etc/shibboleth/shibboleth2.xml`
 
        ```xml
        <MetadataProvider type="XML"
-                         uri="https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml"
+                         url="https://registry.eduid.africa/metadata/federation/Systems_Kampala/metadata.xml"
                          backingFilePath="sysk-metadata.xml">
           <MetadataFilter type="RequireValidUntil" maxValidityInterval="864000" />
           <MetadataFilter type="Exclude">
-              <Include>https://idp-05.ubuntunet.org/simplesaml/module.php/saml/idp/metadata</Include>
+              <Exclude>https://idp-05.ubuntunet.org/simplesaml/module.php/saml/idp/metadata</Exclude>
           </MetadataFilter>
        </MetadataProvider>
        ```
@@ -152,14 +162,15 @@ We can now proceed with the new `MetadataProvider` configurations:
    * `systemctl restart shibd.service`
 
 ## Testing
-You can now visit `https://<SP-FQDN>/secure` to access the secured resource. You will be presented with the discovery service page that allows you to select an Identity Provider for use with the service provider. 
+
+You can now visit `https://<SP-FQDN>/secure` to access the secured resource. You will be presented with the discovery service page that allows you to select an Identity Provider for use with the service provider.
 
 ## Authors
 
 ### Original Author
 
 * Marco Malavolti (marco.malavolti@garr.it)
- 
+
 ## Credits
 
 * [Consortium Shibboleth](https://shibboleth.net/)
