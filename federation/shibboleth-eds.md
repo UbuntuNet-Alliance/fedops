@@ -255,7 +255,7 @@ with the following:
   ],
   ```
 
-### 4. Create the output directory
+### 4. Create the metadata output directory
 
 ```bash
 sudo mkdir -p /var/simplesamlphp/metadata/metarefresh-systems_kampala
@@ -264,19 +264,80 @@ sudo chown www-data /var/simplesamlphp/metadata/metarefresh-systems_kampala
 
 ### 5. Schedule the refresh
 
-Metarefresh only updates when it's run. Enable the `cron` module, set a cron secret in `config.php`, and schedule a job on the same tag used above (`hourly`):
+Metarefresh only updates when it's run. Enable the `cron` module, set a cron secret in `module_cron.php`, and schedule a job on the same tag used above (`hourly`):
 
 ```bash
-touch /var/simplesamlphp/modules/cron/enable
+touch /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/modules/cron/enable
 ```
 
+We can now generate the secret as previously - this is what we will use in the `/var/simplesamlphp/config/module_cron.php`.
+
+```bash
+tr -c -d '0123456789abcdefghijklmnopqrstuvwxyz' </dev/urandom | dd bs=32 count=1 2>/dev/null ; echo
 ```
-0 * * * * curl -s "https://idp-f01.cranecloud.africa/simplesaml/module.php/cron/cron.php?key=<your-cron-secret>&tag=hourly" > /dev/null
+
+Copy this secret generated, and we will paste it into the key field of the `/var/simplesamlphp/config/module_cron.php` configuration:
+
+```bash
+    vim /var/simplesamlphp/config/module_cron.php
 ```
+
+You may reference mine below:
+
+```php
+<?php
+
+/*
+ * Configuration for the Cron module.
+ */
+
+$config = [
+    'key' => 'hmbch26we7u81a92tbrg190134c9vb2n',
+    'allowed_tags' => ['daily', 'hourly', 'frequent'],
+    'debug_message' => true,
+    'sendemail' => true,
+];
+```
+
+
+  Two things to get right here:
+  * `allowed_tags` must include the tag used on the `systems_kampala` set in `config-metarefresh.php` (`'cron' => ['hourly']`). If `hourly` isn't listed, cron will fire but silently skip refreshing that metadata set — no error, it just never updates.
+  * `key` is what authorizes the trigger over HTTP. Treat it like a password: long, random, and never committed to version control.
+
+**c. Trigger the refresh**
+
+Either method works; pick one.
+
+* **HTTP** — simplest, fine for a lightweight hook like this:
+
+  ```
+  sudo su -
+
+  crontab -e
+
+  #enter the following at the end of the crontab file 
+  (remember to replace idp.example.org with your IdP FQDN, and the <CRON_SECRET> with your secret)
+
+  0 * * * * curl -sS "https://idp.example.org/simplesaml/module.php/cron/run/hourly/<CRON_SECRET>" > /dev/null
+  ```
+
+**d. Verify it's actually working**
+
+* Trigger it once by hand rather than waiting an hour for the first run.
+```bash
+   curl -sS "https://idp.example.org/simplesaml/module.php/cron/run/hourly/<CRON_SECRET>"
+```
+
+
+* Check `/var/simplesamlphp/metadata/metarefresh-systems_kampala` — it should now contain populated `.php` files; it will be empty until the first successful run.
+```bash
+   ls -l /var/simplesamlphp/metadata/metarefresh-systems_kampala
+```
+
+Please confirm if the `.php` files are present to this stage before you proceed to the next steps.
 
 ### 6. Clean up `/metadata`
-
-Check whether `https://sp-f01.cranecloud.africa/shibboleth` is already published in the Systems_Kampala federation metadata. If it is, the manual entry in `saml20-sp-remote.php` becomes redundant — and having the same entityID in two metadata sources at once has undefined precedence. Keep both only long enough to confirm the federation copy resolves correctly, then remove the manual block:
+The manual entry in `saml20-sp-remote.php` becomes redundant after a successful federation metadata pull — and having the same entityID in two metadata sources at once has undefined precedence. Keep both only long enough to confirm the federation copy resolves correctly, then remove the manual block:
 
 ```bash
 mkdir /var/simplesamlphp/metadata.old
