@@ -6,6 +6,7 @@ This repository contains instructions for setting up different components of edu
 - [Install and Configure FreeRADIUS for eduroam](eduroam/freeradius-eduroam.md)
 - [Install and Configure a SimpleSAMLphp IdP v2.x](federation/simplesamlphp-idp-v2.md)
 - [Install and Configure a Shibboleth SP v3.x](federation/shibboleth-sp-v3.md)
+- [Install and Configure a Shibboleth Embedded Discovery Service (EDS)](federation/shibboleth-eds.md)
 - [Install and Configure geteduroam for federation/eduroam access](eduroam/geteduroam.md)
 
 
@@ -15,6 +16,8 @@ The architecture consists of several components that work together to provide fe
 2. **FreeRADIUS**: This is the RADIUS server that handles authentication requests for eduroam.
 3. **SimpleSAMLphp IdP**: This is the Identity Provider that authenticates users and provides SAML assertions for federated access.
 4. **Shibboleth SP**: This is the Service Provider that consumes SAML assertions from the IdP and provides access to protected resources.
-5. **geteduroam**: This is a tool that simplifies the process of connecting to eduroam networks by automatically configuring the necessary settings on user devices.
+5. **Shibboleth EDS**: This is the discovery service for the `Systems UbuntuNet Kampala` workshop federation. 
+6. **geteduroam**: This is a tool that simplifies the process of connecting to eduroam networks by automatically configuring the necessary settings on user devices.
+
 
 ![Architecture Overview](static/fedops_architecture_v4.png)
