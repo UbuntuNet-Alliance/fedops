@@ -201,25 +201,15 @@ Notice the two lines added and as shown below:
 
 ### 2. Configure the metarefresh source
 
-Copy the configuration template files to the main config directory.
+Copy the config template, then **replace its entire contents** — don't just append, and don't leave the module's sample `kalmar` set in there (it points at an unrelated feed and references certificate files that won't exist on your box, which will throw errors on every run once other sets are present):
 
 ```bash
-    cd ~ 
-    # Copy the Cron config file
-    cp /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/modules/cron/config/module_cron.php.dist /var/simplesamlphp/config/module_cron.php
-
-    # Copy the Metarefresh config file
-    cp vendor/simplesamlphp/simplesamlphp/modules/metarefresh/config-templates/module_metarefresh.php /var/simplesamlphp/config/module_metarefresh.php
-
-    cd /var/simplesamlphp/
-
+cp /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/modules/metarefresh/config-templates/module_metarefresh.php /var/simplesamlphp/config/module_metarefresh.php
 ```
 
-* `vim  /var/simplesamlphp/config/module_metarefresh.php`
+* `vim /var/simplesamlphp/config/module_metarefresh.php`
 
-Clean or clear the contents of the file and just insert the following:
-
-  ```php
+```php
 <?php
 
 $config = [
@@ -239,119 +229,125 @@ $config = [
         ],
     ],
 ];
-  ```
+```
+
+**Before doing anything else, check it actually parses:**
+
+```bash
+php -l /var/simplesamlphp/config/module_metarefresh.php
+```
+
+It must print `No syntax errors detected`. A broken array here fails silently from the outside (cron returns HTTP 200 either way) and only shows up as a `ConfigurationError` in the log — worth catching now rather than after several rounds of "why is the output directory still empty."
+
+> ⚠️ **`outputDir` is relative to the core library's own directory, not `/var/simplesamlphp`.** On this install, `'outputDir' => 'metadata/metarefresh-systems_kampala/'` resolves to `/var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/metadata/metarefresh-systems_kampala/` — **not** `/var/simplesamlphp/metadata/metarefresh-systems_kampala/`. Confirm this on your own install (see the verification step below) rather than assuming — this is exactly the kind of thing that varies with how SimpleSAMLphp's `basedir` is resolved on a given Composer setup, and getting it wrong means the fetch succeeds but the write silently lands somewhere you're not looking.
 
 ### 3. Point `config.php` at the metarefresh output
 
 * `vim /var/simplesamlphp/config/config.php`
 
-You can edit out the following section:
-
 ```php
-    'metadata.sources' => [
+'metadata.sources' => [
     ['type' => 'flatfile'],
-    ],
+    ['type' => 'flatfile', 'directory' => 'metadata/metarefresh-systems_kampala'],
+],
 ```
 
-with the following:
-
-  ```php
-  'metadata.sources' => [
-      ['type' => 'flatfile'],
-      ['type' => 'flatfile', 'directory' => 'metadata/metarefresh-systems_kampala'],
-  ],
-  ```
-
-### 4. Create the metadata output directory
+### 4. Create the output directory — using the *real* resolved path
 
 ```bash
-sudo mkdir -p /var/simplesamlphp/metadata/metarefresh-systems_kampala
-sudo chown www-data /var/simplesamlphp/metadata/metarefresh-systems_kampala
+mkdir -p /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/metadata/metarefresh-systems_kampala
+chown -R www-data:www-data /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/metadata
 ```
+
+Owning it as `www-data` matters because the refresh runs as the web server user when triggered over HTTP (see below) — a root-owned directory here will fail with "Error creating directory" the moment metarefresh tries to write to it.
 
 ### 5. Schedule the refresh
 
-Metarefresh only updates when it's run. Enable the `cron` module, set a cron secret in `module_cron.php`, and schedule a job on the same tag used above (`hourly`):
+Metarefresh only updates when something actually triggers it — enabling the module doesn't schedule anything by itself. That job belongs to the `cron` module.
+
+**a. Copy and configure the cron module's config file**
 
 ```bash
-touch /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/modules/cron/enable
+cp /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/modules/cron/config/module_cron.php.dist /var/simplesamlphp/config/module_cron.php
 ```
 
-We can now generate the secret as previously - this is what we will use in the `/var/simplesamlphp/config/module_cron.php`.
+Generate a random key:
 
 ```bash
 tr -c -d '0123456789abcdefghijklmnopqrstuvwxyz' </dev/urandom | dd bs=32 count=1 2>/dev/null ; echo
 ```
 
-Copy this secret generated, and we will paste it into the key field of the `/var/simplesamlphp/config/module_cron.php` configuration:
-
-```bash
-    vim /var/simplesamlphp/config/module_cron.php
-```
-
-You may reference mine below:
+* `vim /var/simplesamlphp/config/module_cron.php`
 
 ```php
 <?php
 
-/*
- * Configuration for the Cron module.
- */
-
 $config = [
-    'key' => 'hmbch26we7u81a92tbrg190134c9vb2n',
-    'allowed_tags' => ['daily', 'hourly', 'frequent'],
+    'key'           => '#_YOUR_RANDOM_CRON_KEY_#',
+    'allowed_tags'  => ['daily', 'hourly', 'frequent'],
     'debug_message' => true,
-    'sendemail' => true,
+    'sendemail'     => false,
 ];
 ```
 
+Three things to get right here:
+* `allowed_tags` must include the tag used on the `systems_kampala` set (`'cron' => ['hourly']`). If `hourly` isn't listed, cron fires but silently skips that set — no error, it just never updates.
+* `key` authorizes the trigger over HTTP. Treat it like a password: long, random, never committed to version control.
+* Set `sendemail` to **`false`** unless this box has a working local MTA. With it `true`, every run logs `Unable to send cron report; Could not instantiate mail function` — harmless, but noisy, and it doesn't affect whether the refresh itself works.
 
-  Two things to get right here:
-  * `allowed_tags` must include the tag used on the `systems_kampala` set in `config-metarefresh.php` (`'cron' => ['hourly']`). If `hourly` isn't listed, cron will fire but silently skip refreshing that metadata set — no error, it just never updates.
-  * `key` is what authorizes the trigger over HTTP. Treat it like a password: long, random, and never committed to version control.
+**b. Also raise the log level while getting this working**
 
-**c. Trigger the refresh**
+Metarefresh's per-source status ("Executing set...", "loading source...", any fetch/write errors) logs at `DEBUG`, one level below what most default installs capture. Without this, cron can run cleanly with no visible error at all while metarefresh fails silently underneath it:
 
-You can first visit `https://idp-f01.cranecloud.africa/simplesaml/module.php/admin/` to verify modules `cron` and `metarefresh` are enabled. 
+* `vim /var/simplesamlphp/config/config.php`
 
-* **HTTP** — simplest, fine for a lightweight hook like this:
-
-  ```
-  sudo su -
-
-  crontab -e
-
-  #enter the following at the end of the crontab file 
-  (remember to replace idp.example.org with your IdP FQDN, and the <CRON_SECRET> with your secret)
-
-  0 * * * * curl -sS "https://idp.example.org/simplesaml/module.php/cron/run/hourly/<CRON_SECRET>" > /dev/null
-  ```
-
-**d. Verify it's actually working**
-
-* Trigger it once by hand rather than waiting an hour for the first run.
-```bash
-   curl -sS "https://idp.example.org/simplesaml/module.php/cron/run/hourly/<CRON_SECRET>"
+```php
+'logging.level' => \SimpleSAML\Logger::DEBUG,
 ```
 
+(Dial this back to something quieter, like `NOTICE`, once things are confirmed working — DEBUG is chatty for normal operation.)
 
-* Check `/var/simplesamlphp/metadata/metarefresh-systems_kampala` — it should now contain populated `.php` files; it will be empty until the first successful run.
-```bash
-   ls -l /var/simplesamlphp/metadata/metarefresh-systems_kampala
-```
-
-Please confirm if the `.php` files are present to this stage before you proceed to the next steps.
-
-### 6. Clean up `/metadata`
-The manual entry in `saml20-sp-remote.php` becomes redundant after a successful federation metadata pull — and having the same entityID in two metadata sources at once has undefined precedence. Keep both only long enough to confirm the federation copy resolves correctly, then remove the manual block:
+**c. Schedule the trigger**
 
 ```bash
-mkdir /var/simplesamlphp/metadata.old
-mv /var/simplesamlphp/metadata/saml20-sp-remote.php /var/simplesamlphp/metadata.old/
+crontab -e
 ```
 
-Leave `saml20-idp-hosted.php` in place — that defines your own IdP, not remote SP metadata.
+```
+0 * * * * curl -sS "https://idp.example.org/simplesaml/module.php/cron/run/hourly/<YOUR_RANDOM_CRON_KEY>" > /dev/null
+```
+
+### 6. Verify it's actually working
+
+Trigger it once by hand rather than waiting an hour:
+
+```bash
+curl -sS "https://idp.example.org/simplesaml/module.php/cron/run/hourly/<YOUR_RANDOM_CRON_KEY>"
+```
+
+An empty response here is normal — the cron endpoint doesn't render a page, so no output doesn't mean failure. The real checks:
+
+```bash
+ls -l /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/metadata/metarefresh-systems_kampala/
+```
+
+You should see `.php` files (e.g. `saml20-idp-remote.php`). If the directory is empty, check syslog/`journalctl` for `metarefresh` and `Cron - Summary` lines (this is why step 5b raised the log level):
+
+```bash
+grep -i -E 'metarefresh|cron - summary' /var/log/syslog | tail -n 30
+```
+
+**Check what entity types actually came through.** Metarefresh splits output by type — you may only get `saml20-idp-remote.php`, only `saml20-sp-remote.php`, or both, entirely depending on what the aggregate contains. On the Systems_Kampala feed, only IdP entities came through (`saml20-idp-remote.php`); no SPs. List what's in there:
+
+```bash
+grep -o "metadata\['[^']*'\]" /var/simplesamlphp/vendor/simplesamlphp/simplesamlphp/metadata/metarefresh-systems_kampala/saml20-idp-remote.php
+```
+
+Finally, confirm the entities are actually being picked up by SimpleSAMLphp itself (not just present as files) via **Admin → Federation**:
+
+```
+https://<idp.example.org>/simplesaml/module.php/admin/federation
+```
 
 ## Testing
 
